@@ -1,0 +1,7 @@
+[package]
+name = "edge-stream"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+vehicle-simulator = { git = "ssh://git@github.com/VehiclePulse/vehicle-simulator.git" }
