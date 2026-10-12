@@ -4,7 +4,7 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Deserialize)]
 pub struct VehicleResponse {
-    registration_number: String,
+    pub registration_number: String,
     make: String,
     model: String,
     year: u16,
@@ -24,10 +24,10 @@ pub struct TelemetryRequest {
     pub registration_numbers: Vec<String>
 }
 
-#[derive(Debug, Deserialize)]
-pub struct TelemetryResponse {
-    pub vehicles: Vec<TelemetryUpdateResponse>
-}
+// #[derive(Debug, Deserialize)]
+// pub struct TelemetryResponse {
+//     pub vehicles: Vec<TelemetryUpdateResponse>
+// }
 
 
 #[derive(Debug, Serialize)]
@@ -44,7 +44,7 @@ pub struct TelemetryUpdateRequest {
     pub tire_pressure: TirePressure,
 }
 
-#[derive(Debug, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct TelemetryUpdateResponse {
     pub registration_number: String,
     pub latitude: f64,

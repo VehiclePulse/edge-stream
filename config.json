@@ -1,4 +1,4 @@
 {
     "environment": "development",
-    "base_url": "http://{{base_url}}"
+    "base_url": "http://0.0.0.0:3000"
 }
