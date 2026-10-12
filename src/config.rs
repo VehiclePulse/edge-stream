@@ -1,2 +1,2 @@
 pub mod app_config;
-mod model;
+pub mod model;

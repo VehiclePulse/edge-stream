@@ -1,7 +1,4 @@
 {
     "environment": "development",
-    "vehicle_management": {
-        "vehicle_url": "http://{{base_url}}/vehicles",
-        "telemetry_url": "http://{{base_url}}/vehicles/telemetry/batch"
-    }
+    "base_url": "http://{{base_url}}"
 }
