@@ -1,6 +1,7 @@
-use core::str;
+use uuid::Uuid;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
+
 
 #[derive(Debug, Deserialize)]
 pub struct VehicleResponse {
@@ -8,14 +9,7 @@ pub struct VehicleResponse {
     make: String,
     model: String,
     year: u16,
-    simulation: Simulation
-}
-
-#[derive(Debug, Deserialize)]
-struct Simulation {
-    initial_latitude: f64,
-    initial_longitude: f64,
-    initial_heading: f64
+    simulation: bool
 }
 
 
@@ -24,13 +18,7 @@ pub struct TelemetryRequest {
     pub registration_numbers: Vec<String>
 }
 
-// #[derive(Debug, Deserialize)]
-// pub struct TelemetryResponse {
-//     pub vehicles: Vec<TelemetryUpdateResponse>
-// }
-
-
-#[derive(Debug, Serialize)]
+#[derive(Serialize)]
 pub struct TelemetryUpdateRequest {
     pub latitude: f64,
     pub longitude: f64,
@@ -44,8 +32,10 @@ pub struct TelemetryUpdateRequest {
     pub tire_pressure: TirePressure,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize, Deserialize, Debug)]
 pub struct TelemetryUpdateResponse {
+    #[serde(rename = "_id")]
+    pub vehicle_id: Uuid,
     pub registration_number: String,
     pub latitude: f64,
     pub longitude: f64,

@@ -1,65 +1,62 @@
+mod background;
 mod config;
 mod clients;
+mod services;
 use config::app_config;
-use crate::{clients::model::{TelemetryRequest, TelemetryUpdateRequest, TirePressure}, config::model::{AppState, HttpClient, TypedClient}};
+use tokio_util::sync::CancellationToken;
+use vehicle_simulator::simulator::Simulator;
+use std::{sync::Arc, time::Duration};
+use crate::{background::{rabbitmq_worker, shutdown::wait_for_shutdown_signal}, config::model::{AppState, HttpClient}, services::vehicle_handler};
 
 #[tokio::main]
 async fn main() {
-    let configuration = app_config::load_config();
-    let http_client = clients::init::init();
-    let vehicle_client = clients::vehicle_client::VehicleClient::new(http_client.clone(), configuration.base_url.clone());
+    let cancellation_token = CancellationToken::new();
 
-    let app_state = AppState {
+    let configuration = app_config::load_config();
+
+    let vehicle_client = clients::init_client(&configuration);
+    
+    let (simulator, telemetry_receiver) = 
+        Simulator::new(Duration::from_secs(1));
+
+
+    let app_state = Arc::new(AppState {
         config: configuration,
         http_client: HttpClient { 
-            global_client: http_client, 
-            typed_client: TypedClient {
-                vehicle_client: vehicle_client
-            } 
+            vehicle_client: vehicle_client
+        },
+        simulator: Arc::new(simulator),
+        cancellation_token: cancellation_token
+    });
+
+    let telemetry_handle = tokio::spawn(async move {
+        background::telemetry_worker::run(telemetry_receiver).await;
+       }
+    );
+
+    vehicle_handler::init(&app_state).await;
+
+    //rabbit mq
+    let rabbitmq_state = Arc::clone(&app_state);
+    let rabbitmq_handle = tokio::spawn(async move {
+        if let Err(error) = rabbitmq_worker::run(
+            rabbitmq_state
+        ).await {
+            eprintln!("rabbitmq worker failed with fatal error: {error}");
         }
-    };
-
-    let vehicles = app_state.http_client.typed_client.vehicle_client.get_vehicles().await;
-    //println!("vehicles: {:#?}", vehicles);
-    let reg_numbers: Vec<String> = vehicles.unwrap()
-                .iter()
-                .map(|vehicle| vehicle.registration_number.clone())
-                .collect();
-    println!("registration numbers: {:#?}", reg_numbers);
-
-    let telemetry = app_state.http_client.typed_client.vehicle_client.get_telemetry(&TelemetryRequest{
-        registration_numbers: reg_numbers
-    }).await;
-    println!("telemetry data: {:#?}", telemetry);
+    });
 
 
-    for tel in telemetry.unwrap() {
-        println!("telemetry update call for vehicle: {}", tel.registration_number.clone());
+    //current shutdown listener
+    if let Err(error) = wait_for_shutdown_signal(app_state.cancellation_token.clone()).await {
+        eprintln!("Failed to register the shutdown singal handlers: {error}");
+    }
 
-        let payload = TelemetryUpdateRequest {
-            latitude: tel.latitude,
-            longitude: tel.longitude,
-            speed: tel.speed + 20.0,
-            heading: tel.heading + 2.0,
-            fuel_level: tel.fuel_level,
-            engine_temperature: tel.engine_temperature + 40.0,
-            battery_level: tel.battery_level,
-            tire_pressure: TirePressure {
-                front_left: tel.tire_pressure.front_left,
-                front_right: tel.tire_pressure.front_right,
-                rear_left: tel.tire_pressure.rear_left,
-                rear_right: tel.tire_pressure.rear_right,
-            },
-        };
-
-        let updated_telemetry = app_state.http_client.typed_client.vehicle_client
-            .update_telemetry(tel.registration_number, payload).await;
-        print!("updated telemetry: {:#?}", updated_telemetry);
-
+    if let Err(error) = rabbitmq_handle.await {
+        eprintln!("rabbitmq worker task failed: {error}");
     }
 
 
-
-    print!("hi");
+    drop(telemetry_handle);
     
 }

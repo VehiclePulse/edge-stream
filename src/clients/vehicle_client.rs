@@ -41,6 +41,8 @@ impl VehicleClient {
             .json::<Vec<TelemetryUpdateResponse>>()
             .await?;
 
+        //println!("response: {:#?}", response);
+
         Ok(response)
     }
 

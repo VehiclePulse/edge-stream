@@ -1,4 +1,9 @@
 {
     "environment": "development",
-    "base_url": "http://0.0.0.0:3000"
+    "base_url": "http://0.0.0.0:3000",
+    "rabbitmq": {
+        "url": "amqp://admin:admin_password@localhost:5672/%2F",
+        "queue": "vehicle.management",
+        "prefetch": 3
+    }
 }
