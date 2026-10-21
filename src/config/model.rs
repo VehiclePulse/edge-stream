@@ -16,7 +16,8 @@ pub struct AppState {
 #[derive(Deserialize, Clone)]
 pub struct Configuration {
     pub base_url: String,
-    pub rabbitmq: RabbitMq
+    pub rabbitmq: RabbitMq,
+    pub kafka: Kafka
 }
 
 #[derive(Clone)]
@@ -29,4 +30,10 @@ pub struct RabbitMq {
     pub url: String,
     pub queue: String,
     pub prefetch: u16
+}
+
+#[derive(Deserialize, Clone)]
+pub struct Kafka {
+    pub bootstrap_servers: String,
+    pub topic: String,
 }

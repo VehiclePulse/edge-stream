@@ -1,5 +1,5 @@
 use lapin::{
-    Connection, ConnectionProperties, options::{BasicAckOptions, BasicConsumeOptions, BasicNackOptions, BasicQosOptions, BasicRejectOptions}, types::{
+    Connection, ConnectionProperties, options::{BasicAckOptions, BasicConsumeOptions, BasicQosOptions, BasicRejectOptions}, types::{
         FieldTable, ShortString
     }
 };

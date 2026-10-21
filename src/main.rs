@@ -29,8 +29,20 @@ async fn main() {
         cancellation_token: cancellation_token
     });
 
+    //kafka
+    let kafka_producer = clients::kafka_client::init_producer(
+        &app_state.config.kafka.bootstrap_servers
+    );
+
+    let kafka_topic = app_state.config.kafka.topic.clone(); 
+
+    //mpsc listener
     let telemetry_handle = tokio::spawn(async move {
-        background::telemetry_worker::run(telemetry_receiver).await;
+        background::telemetry_worker::run(
+                telemetry_receiver,
+                kafka_producer,
+                kafka_topic
+            ).await;
        }
     );
 
@@ -56,7 +68,9 @@ async fn main() {
         eprintln!("rabbitmq worker task failed: {error}");
     }
 
+    drop(app_state);
 
-    drop(telemetry_handle);
-    
+    if let Err(error) = telemetry_handle.await {
+        eprintln!("Telemetry worker task failed: {error}");
+    }    
 }
